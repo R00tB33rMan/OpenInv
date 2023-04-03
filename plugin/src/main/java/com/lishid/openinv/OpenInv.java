@@ -18,11 +18,7 @@ package com.lishid.openinv;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.lishid.openinv.commands.ContainerSettingCommand;
-import com.lishid.openinv.commands.OpenInvCommand;
-import com.lishid.openinv.commands.SearchContainerCommand;
-import com.lishid.openinv.commands.SearchEnchantCommand;
-import com.lishid.openinv.commands.SearchInvCommand;
+import com.lishid.openinv.commands.*;
 import com.lishid.openinv.internal.IAnySilentContainer;
 import com.lishid.openinv.internal.ISpecialEnderChest;
 import com.lishid.openinv.internal.ISpecialInventory;
@@ -32,6 +28,8 @@ import com.lishid.openinv.util.Permissions;
 import com.lishid.openinv.util.StringMetric;
 import com.lishid.openinv.util.lang.LanguageManager;
 import com.lishid.openinv.util.lang.Replacement;
+
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
@@ -48,10 +46,9 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.PluginCommand;
+import org.bukkit.command.*;
+import org.bukkit.command.defaults.BukkitCommand;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -148,12 +145,16 @@ public class OpenInv extends JavaPlugin implements IOpenInv {
             pm.registerEvents(new PlayerListener(this), this);
             pm.registerEvents(new InventoryListener(this), this);
 
-            // Register commands to their executors
-            this.setCommandExecutor(new OpenInvCommand(this), "openinv", "openender");
-            this.setCommandExecutor(new SearchContainerCommand(this), "searchcontainer");
-            this.setCommandExecutor(new SearchInvCommand(this), "searchinv", "searchender");
-            this.setCommandExecutor(new SearchEnchantCommand(this), "searchenchant");
-            this.setCommandExecutor(new ContainerSettingCommand(this), "silentcontainer", "anycontainer");
+            // Register commands to their executors via command map
+            this.setCommandExecutorCmdMap(new OpenInvCommand(this), getConfig().getConfigurationSection("commands.openinv"));
+            this.setCommandExecutorCmdMap(new OpenEnderCommand(this), getConfig().getConfigurationSection("commands.openender"));
+            this.setCommandExecutorCmdMap(new SearchContainerCommand(this), getConfig().getConfigurationSection("commands.searchcontainer"));
+            this.setCommandExecutorCmdMap(new SearchInvCommand(this), getConfig().getConfigurationSection("commands.searchinv"));
+            this.setCommandExecutorCmdMap(new SearchEnderCommand(this), getConfig().getConfigurationSection("commands.searchender"));
+            this.setCommandExecutorCmdMap(new SearchEnchantCommand(this), getConfig().getConfigurationSection("commands.searchenchant"));
+            this.setCommandExecutorCmdMap(new ContainerSettingCommand(this), getConfig().getConfigurationSection("commands.silentcontainer"));
+            this.setCommandExecutorCmdMap(new AnyContainerSettingCommand(this), getConfig().getConfigurationSection("commands.anycontainer"));
+
 
         } else {
             this.sendVersionError(this.getLogger()::warning);
@@ -161,12 +162,42 @@ public class OpenInv extends JavaPlugin implements IOpenInv {
 
     }
 
-    private void setCommandExecutor(@NotNull CommandExecutor executor, String @NotNull ... commands) {
-        for (String commandName : commands) {
-            PluginCommand command = this.getCommand(commandName);
-            if (command != null) {
-                command.setExecutor(executor);
+    private void setCommandExecutorCmdMap(@NotNull CommandExecutor executor, ConfigurationSection section) {
+        if (section == null) {
+            getLogger().log(Level.SEVERE, "Failed to register command: section is null");
+            return;
+        }
+
+        BukkitCommand command = new BukkitCommand(section.getName()) {
+            @Override
+            public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
+                return executor.onCommand(sender, this, commandLabel, args);
             }
+        };
+
+        if (section.contains("aliases")) {
+            command.setAliases(section.getStringList("aliases"));
+        }
+        if (section.contains("description")) {
+            command.setDescription(section.getString("description", ""));
+        }
+        if (section.contains("usage")) {
+            command.setUsage(section.getString("usage", ""));
+        }
+        if (section.contains("permission")) {
+            command.setPermission(section.getString("permission"));
+        }
+
+        try {
+            Field commandMap = Bukkit.getServer().getClass().getDeclaredField("commandMap");
+            commandMap.setAccessible(true);
+            ((CommandMap) commandMap.get(Bukkit.getServer())).register(getDescription().getName(), command);
+        } catch (NoSuchFieldException e) {
+            getLogger().log(Level.SEVERE, "Failed to get commandMap field", e);
+        } catch (IllegalAccessException e) {
+            getLogger().log(Level.SEVERE, "Failed to access commandMap field", e);
+        } catch (IllegalArgumentException e) {
+            getLogger().log(Level.SEVERE, "Failed to register command", e);
         }
     }
 

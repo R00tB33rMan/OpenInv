@@ -21,6 +21,10 @@ import com.lishid.openinv.internal.ISpecialInventory;
 import com.lishid.openinv.util.Permissions;
 import com.lishid.openinv.util.TabCompleter;
 import com.lishid.openinv.util.lang.Replacement;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.StringJoiner;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -30,28 +34,18 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.StringJoiner;
-
-public class OpenInvCommand implements TabExecutor {
+public class OpenEnderCommand implements TabExecutor {
 
     private final OpenInv plugin;
     private final HashMap<Player, String> openInvHistory = new HashMap<>();
     private final HashMap<Player, String> openEnderHistory = new HashMap<>();
 
-    public OpenInvCommand(final OpenInv plugin) {
+    public OpenEnderCommand(final OpenInv plugin) {
         this.plugin = plugin;
     }
 
     @Override
     public boolean onCommand(@NotNull final CommandSender sender, @NotNull final Command command, @NotNull final String label, @NotNull final String[] args) {
-
-        if (args.length > 0 && (args[0].equalsIgnoreCase("help") || args[0].equals("?"))) {
-            this.showHelp(sender);
-            return true;
-        }
 
         if (!(sender instanceof Player player)) {
             plugin.sendMessage(sender, "messages.error.consoleUnsupported");
@@ -63,11 +57,11 @@ public class OpenInvCommand implements TabExecutor {
             noArgValue = player.getUniqueId().toString();
         } else {
             // History management
-            noArgValue = this.openInvHistory.get(player);
+            noArgValue = this.openEnderHistory.get(player);
 
             if (noArgValue == null || noArgValue.isEmpty()) {
                 noArgValue = player.getUniqueId().toString();
-                this.openInvHistory.put(player, noArgValue);
+                this.openEnderHistory.put(player, noArgValue);
             }
         }
 
@@ -82,7 +76,7 @@ public class OpenInvCommand implements TabExecutor {
         new BukkitRunnable() {
             @Override
             public void run() {
-                final OfflinePlayer offlinePlayer = OpenInvCommand.this.plugin.matchPlayer(name);
+                final OfflinePlayer offlinePlayer = OpenEnderCommand.this.plugin.matchPlayer(name);
 
                 if (offlinePlayer == null || !offlinePlayer.hasPlayedBefore() && !offlinePlayer.isOnline()) {
                     plugin.sendMessage(player, "messages.error.invalidPlayer");
@@ -95,9 +89,9 @@ public class OpenInvCommand implements TabExecutor {
                         if (!player.isOnline()) {
                             return;
                         }
-                        OpenInvCommand.this.openInventory(player, offlinePlayer, true);
+                        OpenEnderCommand.this.openInventory(player, offlinePlayer, false);
                     }
-                }.runTask(OpenInvCommand.this.plugin);
+                }.runTask(OpenEnderCommand.this.plugin);
 
             }
         }.runTaskAsynchronously(this.plugin);

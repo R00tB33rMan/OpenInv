@@ -19,10 +19,6 @@ package com.lishid.openinv.commands;
 import com.lishid.openinv.OpenInv;
 import com.lishid.openinv.util.TabCompleter;
 import com.lishid.openinv.util.lang.Replacement;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Predicate;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -30,11 +26,16 @@ import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-public class ContainerSettingCommand implements TabExecutor {
+import java.util.Collections;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
+
+public class AnyContainerSettingCommand implements TabExecutor {
 
     private final OpenInv plugin;
 
-    public ContainerSettingCommand(final OpenInv plugin) {
+    public AnyContainerSettingCommand(final OpenInv plugin) {
         this.plugin = plugin;
     }
 
@@ -45,9 +46,8 @@ public class ContainerSettingCommand implements TabExecutor {
             return true;
         }
 
-
-        Predicate<Player> getSetting = plugin::getSilentContainerStatus;
-        BiConsumer<OfflinePlayer, Boolean> setSetting = plugin::setSilentContainerStatus;
+        Predicate<Player> getSetting = plugin::getAnyContainerStatus;
+        BiConsumer<OfflinePlayer, Boolean> setSetting =  plugin::setAnyContainerStatus;
 
         if (args.length > 0) {
             args[0] = args[0].toLowerCase();
@@ -73,7 +73,7 @@ public class ContainerSettingCommand implements TabExecutor {
         plugin.sendMessage(
                 sender,
                 "messages.info.settingState",
-                new Replacement("%setting%", "SilentContainer"),
+                new Replacement("%setting%", "AnyContainer"),
                 new Replacement("%state%", onOff));
 
         return true;
