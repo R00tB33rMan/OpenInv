@@ -14,7 +14,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.lishid.openinv.internal.v1_19_R2;
+package com.lishid.openinv.internal.v1_20_R1;
 
 import com.lishid.openinv.OpenInv;
 import com.lishid.openinv.internal.IPlayerDataManager;
@@ -36,10 +36,10 @@ import net.minecraft.world.level.Level;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
-import org.bukkit.craftbukkit.v1_19_R2.CraftServer;
-import org.bukkit.craftbukkit.v1_19_R2.entity.CraftPlayer;
-import org.bukkit.craftbukkit.v1_19_R2.event.CraftEventFactory;
-import org.bukkit.craftbukkit.v1_19_R2.inventory.CraftContainer;
+import org.bukkit.craftbukkit.v1_20_R1.CraftServer;
+import org.bukkit.craftbukkit.v1_20_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_20_R1.event.CraftEventFactory;
+import org.bukkit.craftbukkit.v1_20_R1.inventory.CraftContainer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.InventoryView;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +122,7 @@ public class PlayerDataManager implements IPlayerDataManager {
         // Also read "extra" data.
         entity.readAdditionalSaveData(loadedData);
 
-        if (entity.level == null) {
+        if (entity.level() == null) {
             // Paper: Move player to spawn
             entity.spawnIn(null);
         }
